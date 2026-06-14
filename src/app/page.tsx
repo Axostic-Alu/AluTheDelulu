@@ -739,16 +739,16 @@ export default function Home() {
               >
                 <ShimmerGlass className="p-6 md:p-8">
                   <p className="leading-relaxed text-[var(--color-text-secondary)] text-lg">
-                    I am Almaan. I'm not special — I'm basically the human equivalent of a "lazy"
+                    I am Almaan. I'm not special. I'm basically the human equivalent of a "lazy"
                     status effect in an RPG. I don't follow grand master plans; I just do things for fun,
                     mostly because I've decided that everything I do is technically a "level up."
                   </p>
                   <p className="mt-4 leading-relaxed text-[var(--color-text-secondary)] text-lg">
                     Did I finally take out the trash? That's a +10 to my domestic stats. Did I manage
-                    to exist today? That's a legendary-tier achievement. I'm just out here grinding my
-                    real-life XP, one leisurely quest at a time. If you're looking for a productivity
-                    machine, you've hit the wrong NPC. But if you're looking for someone who treats
-                    breathing as a significant milestone in their character progression — that's me.
+                    to exist today? That's a legendary-tier achievement. I'm just out here existing and
+                    trying to gain real-life XP, one leisurely quest at a time. If you're looking for a 
+                    hyped up machine, you've hit the wrong NPC. But if you're looking for someone who 
+                    treats breathing as a significant milestone in their character progression, that's me!!
                   </p>
                 </ShimmerGlass>
               </motion.div>
