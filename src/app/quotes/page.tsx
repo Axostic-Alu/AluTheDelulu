@@ -93,7 +93,7 @@ const quotes: QuoteEntry[] = [
 
   // ── Celeste ──
   { text: "Be proud of your mountain. It's yours.", source: "Madeline", game: "Celeste", gameColor: "#ec4899" },
-  { text: "You can do this.", source: "Celeste", game: "Madeline", gameColor: "#ec4899" },
+  { text: "You can do this.", source: "Madeline", game: "Celeste", gameColor: "#ec4899" },
 
   // ── Minecraft ──
   { text: "A world is only as limited as your imagination.", source: "Minecraft", game: "Minecraft", gameColor: "#84cc16" },
