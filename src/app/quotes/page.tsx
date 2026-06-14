@@ -14,86 +14,86 @@ interface QuoteEntry {
 
 const quotes: QuoteEntry[] = [
   // ── God of War ──
-  { text: "Don't be sorry, be better.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "The culmination of love is grief, and yet we love despite the inevitable. We open our hearts to it… To grieve deeply is to have loved fully.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "Death can have me, when it earns me.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "Keep your expectations low and you will never be disappointed.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
+  { text: "Don't be sorry, be better.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
+  { text: "The culmination of love is grief, and yet we love despite the inevitable. We open our hearts to it… To grieve deeply is to have loved fully.", source: "Faye", game: "God of War", gameColor: "#06b6d4" },
+  { text: "Death can have me, when it earns me.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
+  { text: "Keep your expectations low and you will never be disappointed.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
   { text: "The past is just a story we tell ourselves.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "We are the gods we choose to be.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "Fate only binds you if you let it.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
-  { text: "Open your heart to their despair. Open your heart to their suffering.", source: "God of War", game: "God of War", gameColor: "#06b6d4" },
+  { text: "We are the gods we choose to be.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
+  { text: "Fate only binds you if you let it.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
+  { text: "Open your heart to their despair. Open your heart to their suffering.", source: "Kratos", game: "God of War", gameColor: "#06b6d4" },
 
   // ── Omori ──
   { text: "The truth is hard to accept, but it is better to face it than to live in a lie.", source: "Omori", game: "Omori", gameColor: "#8b5cf6" },
-  { text: "You have to forgive yourself for what you couldn't do.", source: "Omori", game: "Omori", gameColor: "#8b5cf6" },
-  { text: "Everything is going to be okay.", source: "Omori", game: "Omori", gameColor: "#8b5cf6" },
+  { text: "You have to forgive yourself for what you couldn't do.", source: "Mari", game: "Omori", gameColor: "#8b5cf6" },
+  { text: "Everything is going to be okay.", source: "Mari", game: "Omori", gameColor: "#8b5cf6" },
 
   // ── Until Then ──
-  { text: "Sometimes, the hardest part of moving forward is remembering to forgive yourself.", source: "Until Then", game: "Until Then", gameColor: "#f43f5e" },
-  { text: "If I disappear, will anyone even notice?", source: "Until Then", game: "Until Then", gameColor: "#f43f5e" },
-  { text: "We are all just echoes of our own choices.", source: "Until Then", game: "Until Then", gameColor: "#f43f5e" },
-  { text: "Time is a fragile thread; pull too hard and it all unravels.", source: "Until Then", game: "Until Then", gameColor: "#f43f5e" },
-  { text: "What matters isn't how long you live, but who you choose to live for.", source: "Until Then", game: "Until Then", gameColor: "#f43f5e" },
+  { text: "Sometimes, the hardest part of moving forward is remembering to forgive yourself.", source: "Mark", game: "Until Then", gameColor: "#f43f5e" },
+  { text: "If I disappear, will anyone even notice?", source: "Mark", game: "Until Then", gameColor: "#f43f5e" },
+  { text: "We are all just echoes of our own choices.", source: "Mark", game: "Until Then", gameColor: "#f43f5e" },
+  { text: "Time is a fragile thread; pull too hard and it all unravels.", source: "Mark", game: "Until Then", gameColor: "#f43f5e" },
+  { text: "What matters isn't how long you live, but who you choose to live for.", source: "Mark", game: "Until Then", gameColor: "#f43f5e" },
 
   // ── Re:Zero ──
-  { text: "I will die, and die, and die again, and I will still save you.", source: "Re:Zero", game: "Re:Zero", gameColor: "#ef4444" },
-  { text: "Even if the world turns against you, I will be the one to stand by your side.", source: "Re:Zero", game: "Re:Zero", gameColor: "#ef4444" },
-  { text: "I have no strength, but I want it all. I have no knowledge, but all I do is dream. There's nothing I can do, but I struggle in vain.", source: "Re:Zero", game: "Re:Zero", gameColor: "#ef4444" },
+  { text: "I will die, and die, and die again, and I will still save you.", source: "Natsuki Subaru", game: "Re:Zero", gameColor: "#ef4444" },
+  { text: "Even if the world turns against you, I will be the one to stand by your side.", source: "Natsuki Subaru", game: "Re:Zero", gameColor: "#ef4444" },
+  { text: "I have no strength, but I want it all. I have no knowledge, but all I do is dream. There's nothing I can do, but I struggle in vain.", source: "Natsuki Subaru", game: "Re:Zero", gameColor: "#ef4444" },
 
   // ── Undertale ──
   { text: "Determination is the ability to change the world against all odds.", source: "Undertale", game: "Undertale", gameColor: "#6366f1" },
-  { text: "In this world, it's kill or be killed.", source: "Undertale", game: "Undertale", gameColor: "#6366f1" },
+  { text: "In this world, it's kill or be killed.", source: "Flowey", game: "Undertale", gameColor: "#6366f1" },
   { text: "Despite everything, it's still you.", source: "Undertale", game: "Undertale", gameColor: "#6366f1" },
   { text: "You are filled with determination.", source: "Undertale", game: "Undertale", gameColor: "#6366f1" },
 
   // ── Hollow Knight ──
   { text: "Even the smallest light can pierce the deepest darkness.", source: "Hollow Knight", game: "Hollow Knight", gameColor: "#14b8a6" },
-  { text: "No cost too great.", source: "Hollow Knight", game: "Hollow Knight", gameColor: "#14b8a6" },
+  { text: "No cost too great.", source: "Pale king", game: "Hollow Knight", gameColor: "#14b8a6" },
   { text: "Fear is not the absence of courage, but the judgment that something else is more important.", source: "Hollow Knight", game: "Hollow Knight", gameColor: "#14b8a6" },
 
   // ── Red Dead Redemption 2 ──
   { text: "In the end, we are all just stories. Make yours worth telling.", source: "Red Dead Redemption 2", game: "Red Dead Redemption 2", gameColor: "#ef4444" },
-  { text: "We're more ghosts than people.", source: "Red Dead Redemption 2", game: "Red Dead Redemption 2", gameColor: "#ef4444" },
-  { text: "There's a lot of things that you can do in this life, but you can't give up on yourself.", source: "Red Dead Redemption 2", game: "Red Dead Redemption 2", gameColor: "#ef4444" },
+  { text: "We're more ghosts than people.", source: "Arthur Morgan", game: "Red Dead Redemption 2", gameColor: "#ef4444" },
+  { text: "There's a lot of things that you can do in this life, but you can't give up on yourself.", source: "Arthur Morgan", game: "Red Dead Redemption 2", gameColor: "#ef4444" },
 
   // ── Lies of P ──
-  { text: "Even if you lose everything, the memory of who you were remains.", source: "Lies of P", game: "Lies of P", gameColor: "#f97316" },
+  { text: "Even if you lose everything, the memory of who you were remains.", source: "Sophia", game: "Lies of P", gameColor: "#f97316" },
   { text: "To be human is to feel the weight of your own choices.", source: "Lies of P", game: "Lies of P", gameColor: "#f97316" },
-  { text: "A lie is a beautiful thing, if it serves the truth.", source: "Lies of P", game: "Lies of P", gameColor: "#f97316" },
+  { text: "A lie is a beautiful thing, if it serves the truth.", source: "Pinocchio (P)", game: "Lies of P", gameColor: "#f97316" },
 
   // ── Sea of Stars ──
-  { text: "The stars don't ask to be seen; they just shine.", source: "Sea of Stars", game: "Sea of Stars", gameColor: "#0ea5e9" },
-  { text: "It is not the destination, but the path you walk that defines you.", source: "Sea of Stars", game: "Sea of Stars", gameColor: "#0ea5e9" },
+  { text: "The stars don't ask to be seen; they just shine.", source: "Valere/Zale", game: "Sea of Stars", gameColor: "#0ea5e9" },
+  { text: "It is not the destination, but the path you walk that defines you.", source: "Elder Mist", game: "Sea of Stars", gameColor: "#0ea5e9" },
   { text: "Every ending is just a new beginning in disguise.", source: "Sea of Stars", game: "Sea of Stars", gameColor: "#0ea5e9" },
 
   // ── Inscryption ──
-  { text: "We are all prisoners of our own perspectives.", source: "Inscryption", game: "Inscryption", gameColor: "#78716c" },
+  { text: "We are all prisoners of our own perspectives.", source: "Leshy", game: "Inscryption", gameColor: "#78716c" },
   { text: "The cards you are dealt don't define you; how you play them does.", source: "Inscryption", game: "Inscryption", gameColor: "#78716c" },
 
   // ── Silent Hill ──
   { text: "Silence is the loudest scream.", source: "Silent Hill", game: "Silent Hill", gameColor: "#64748b" },
-  { text: "We all have our own private hells.", source: "Silent Hill", game: "Silent Hill", gameColor: "#64748b" },
+  { text: "We all have our own private hells.", source: "ames Sunderland", game: "Silent Hill", gameColor: "#64748b" },
   { text: "A world of monsters is better than a world of empty promises.", source: "Silent Hill", game: "Silent Hill", gameColor: "#64748b" },
 
   // ── CrossCode ──
-  { text: "Choose your path, but be prepared for the consequences.", source: "CrossCode", game: "CrossCode", gameColor: "#a855f7" },
+  { text: "Choose your path, but be prepared for the consequences.", source: "Lea", game: "CrossCode", gameColor: "#a855f7" },
   { text: "Data is just memory without a heart.", source: "CrossCode", game: "CrossCode", gameColor: "#a855f7" },
 
   // ── LISA: The Painful ──
-  { text: "Don't look back; the past is a ghost.", source: "LISA: The Painful", game: "LISA: The Painful", gameColor: "#f59e0b" },
+  { text: "Don't look back; the past is a ghost.", source: "Brad Armstrong", game: "LISA: The Painful", gameColor: "#f59e0b" },
   { text: "Survival is not living.", source: "LISA: The Painful", game: "LISA: The Painful", gameColor: "#f59e0b" },
 
   // ── The Walking Dead ──
-  { text: "Every choice has a cost.", source: "The Walking Dead", game: "The Walking Dead", gameColor: "#84cc16" },
-  { text: "You don't lose yourself, you just find a new version of you.", source: "The Walking Dead", game: "The Walking Dead", gameColor: "#84cc16" },
+  { text: "Every choice has a cost.", source: "Lee Everett", game: "The Walking Dead", gameColor: "#84cc16" },
+  { text: "You don't lose yourself, you just find a new version of you.", source: "Clementine", game: "The Walking Dead", gameColor: "#84cc16" },
 
   // ── Firewatch ──
-  { text: "Don't run from things, just because they hurt.", source: "Firewatch", game: "Firewatch", gameColor: "#10b981" },
-  { text: "Sometimes you just have to walk away to save yourself.", source: "Firewatch", game: "Firewatch", gameColor: "#10b981" },
+  { text: "Don't run from things, just because they hurt.", source: "Henry", game: "Firewatch", gameColor: "#10b981" },
+  { text: "Sometimes you just have to walk away to save yourself.", source: "Delilah", game: "Firewatch", gameColor: "#10b981" },
 
   // ── Celeste ──
-  { text: "Be proud of your mountain. It's yours.", source: "Celeste", game: "Celeste", gameColor: "#ec4899" },
-  { text: "You can do this.", source: "Celeste", game: "Celeste", gameColor: "#ec4899" },
+  { text: "Be proud of your mountain. It's yours.", source: "Madeline", game: "Celeste", gameColor: "#ec4899" },
+  { text: "You can do this.", source: "Celeste", game: "Madeline", gameColor: "#ec4899" },
 
   // ── Minecraft ──
   { text: "A world is only as limited as your imagination.", source: "Minecraft", game: "Minecraft", gameColor: "#84cc16" },
