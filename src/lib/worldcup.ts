@@ -55,25 +55,62 @@ export type GroupStandings = {
   teams: Standing[];
 };
 
-// ─── Flag emoji helpers for common teams ─────────────────────────────
+// ─── Country Translation & Flag Map ──────────────────────────────────
 
-const FLAG_MAP: Record<string, string> = {
-  "Mexiko": "🇲🇽", "Südafrika": "🇿🇦", "Südkorea": "🇰🇷", "Tschechien": "🇨🇿",
-  "Kanada": "🇨🇦", "Bosnien und Herzegowina": "🇧🇦", "USA": "🇺🇸", "Paraguay": "🇵🇾",
-  "Katar": "🇶🇦", "Schweiz": "🇨🇭", "Brasilien": "🇧🇷", "Marokko": "🇲🇦",
-  "Haiti": "🇭🇹", "Schottland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Australien": "🇦🇺", "Türkei": "🇹🇷",
-  "Deutschland": "🇩🇪", "Curaçao": "🇨🇼", "Niederlande": "🇳🇱", "Japan": "🇯🇵",
-  "Elfenbeinküste": "🇨🇮", "Ecuador": "🇪🇨", "Schweden": "🇸🇪", "Tunesien": "🇹🇳",
-  "Spanien": "🇪🇸", "Kap Verde": "🇨🇻", "Belgien": "🇧🇪", "Ägypten": "🇪🇬",
-  "Saudi Arabien": "🇸🇦", "Uruguay": "🇺🇾", "Iran": "🇮🇷", "Neuseeland": "🇳🇿",
-  "Frankreich": "🇫🇷", "Senegal": "🇸🇳", "Irak": "🇮🇶", "Norwegen": "🇳🇴",
-  "Argentinien": "🇦🇷", "Algerien": "🇩🇿", "Österreich": "🇦🇹", "Jordanien": "🇯🇴",
-  "Portugal": "🇵🇹", "DR Kongo": "🇨🇩", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Kroatien": "🇭🇷",
-  "Ghana": "🇬🇭", "Panama": "🇵🇦", "Usbekistan": "🇺🇿", "Kolumbien": "🇨🇴",
+// Maps German API country names to English names and flags
+const TEAM_MAP: Record<string, { name: string; flag: string }> = {
+  "Mexiko": { name: "Mexico", flag: "🇲🇽" },
+  "Südafrika": { name: "South Africa", flag: "🇿🇦" },
+  "Südkorea": { name: "South Korea", flag: "🇰🇷" },
+  "Tschechien": { name: "Czech Republic", flag: "🇨🇿" },
+  "Kanada": { name: "Canada", flag: "🇨🇦" },
+  "Bosnien und Herzegowina": { name: "Bosnia & Herzegovina", flag: "🇧🇦" },
+  "USA": { name: "USA", flag: "🇺🇸" },
+  "Paraguay": { name: "Paraguay", flag: "🇵🇾" },
+  "Katar": { name: "Qatar", flag: "🇶🇦" },
+  "Schweiz": { name: "Switzerland", flag: "🇨🇭" },
+  "Brasilien": { name: "Brazil", flag: "🇧🇷" },
+  "Marokko": { name: "Morocco", flag: "🇲🇦" },
+  "Haiti": { name: "Haiti", flag: "🇭🇹" },
+  "Schottland": { name: "Scotland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+  "Australien": { name: "Australia", flag: "🇦🇺" },
+  "Türkei": { name: "Turkey", flag: "🇹🇷" },
+  "Deutschland": { name: "Germany", flag: "🇩🇪" },
+  "Curaçao": { name: "Curaçao", flag: "🇨🇼" },
+  "Niederlande": { name: "Netherlands", flag: "🇳🇱" },
+  "Japan": { name: "Japan", flag: "🇯🇵" },
+  "Elfenbeinküste": { name: "Ivory Coast", flag: "🇨🇮" },
+  "Ecuador": { name: "Ecuador", flag: "🇪🇨" },
+  "Schweden": { name: "Sweden", flag: "🇸🇪" },
+  "Tunesien": { name: "Tunisia", flag: "🇹🇳" },
+  "Spanien": { name: "Spain", flag: "🇪🇸" },
+  "Kap Verde": { name: "Cape Verde", flag: "🇨🇻" },
+  "Belgien": { name: "Belgium", flag: "🇧🇪" },
+  "Ägypten": { name: "Egypt", flag: "🇪🇬" },
+  "Saudi Arabien": { name: "Saudi Arabia", flag: "🇸🇦" },
+  "Uruguay": { name: "Uruguay", flag: "🇺🇾" },
+  "Iran": { name: "Iran", flag: "🇮🇷" },
+  "Neuseeland": { name: "New Zealand", flag: "🇳🇿" },
+  "Frankreich": { name: "France", flag: "🇫🇷" },
+  "Senegal": { name: "Senegal", flag: "🇸🇳" },
+  "Irak": { name: "Iraq", flag: "🇮🇶" },
+  "Norwegen": { name: "Norway", flag: "🇳🇴" },
+  "Argentinien": { name: "Argentina", flag: "🇦🇷" },
+  "Algerien": { name: "Algeria", flag: "🇩🇿" },
+  "Österreich": { name: "Austria", flag: "🇦🇹" },
+  "Jordanien": { name: "Jordan", flag: "🇯🇴" },
+  "Portugal": { name: "Portugal", flag: "🇵🇹" },
+  "DR Kongo": { name: "DR Congo", flag: "🇨🇩" },
+  "England": { name: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  "Kroatien": { name: "Croatia", flag: "🇭🇷" },
+  "Ghana": { name: "Ghana", flag: "🇬🇭" },
+  "Panama": { name: "Panama", flag: "🇵🇦" },
+  "Usbekistan": { name: "Uzbekistan", flag: "🇺🇿" },
+  "Kolumbien": { name: "Colombia", flag: "🇨🇴" },
 };
 
-function getFlag(teamName: string): string {
-  return FLAG_MAP[teamName] || "🏳️";
+function getTeamInfo(germanName: string): { name: string; flag: string } {
+  return TEAM_MAP[germanName] || { name: germanName, flag: "🏳️" };
 }
 
 // ─── API Functions ────────────────────────────────────────────────────
@@ -130,8 +167,11 @@ function convertOpenLigaMatch(m: any): Match {
     if (matchMinute > 120) matchMinute = 90 + Math.floor((matchMinute - 90) / 2); // approximate extra time
   }
 
-  const homeTeam = m.team1?.teamName || "TBD";
-  const awayTeam = m.team2?.teamName || "TBD";
+  const rawHomeTeam = m.team1?.teamName || "TBD";
+  const rawAwayTeam = m.team2?.teamName || "TBD";
+  const homeTeamData = getTeamInfo(rawHomeTeam);
+  const awayTeamData = getTeamInfo(rawAwayTeam);
+
   const dateStr = dtUTC.toISOString().slice(0, 10);
   const timeStr = dtUTC.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -142,10 +182,10 @@ function convertOpenLigaMatch(m: any): Match {
 
   return {
     id: String(m.matchID || Math.random()),
-    homeTeam,
-    awayTeam,
-    homeBadge: getFlag(homeTeam),
-    awayBadge: getFlag(awayTeam),
+    homeTeam: homeTeamData.name,
+    awayTeam: awayTeamData.name,
+    homeBadge: homeTeamData.flag,
+    awayBadge: awayTeamData.flag,
     homeScore,
     awayScore,
     date: dateStr,
@@ -173,7 +213,6 @@ export async function fetchNextMatch(): Promise<Match | null> {
   }
   // Fallback: manually find next match
   const all = await fetchAllMatches();
-  const now = new Date();
   const upcoming = all
     .filter((m) => m.status === "scheduled")
     .sort((a, b) => new Date(a.dateUTC).getTime() - new Date(b.dateUTC).getTime());
@@ -182,7 +221,6 @@ export async function fetchNextMatch(): Promise<Match | null> {
 
 export async function fetchCurrentOrNextMatch(): Promise<Match | null> {
   const all = await fetchAllMatches();
-  const now = new Date();
 
   // Check for live matches first
   const live = all.filter((m) => m.status === "live");
@@ -208,22 +246,27 @@ export async function fetchStandings(): Promise<GroupStandings[]> {
   }
 
   return Array.from(groupMap.entries()).map(([group, rows]) => {
-    const teams: Standing[] = rows.map((r: any, idx: number) => ({
-      rank: idx + 1,
-      teamId: String(r.teamId || ""),
-      teamName: r.teamName || "Unknown",
-      badge: getFlag(r.teamName || ""),
-      group,
-      played: r.matches ?? 0,
-      won: r.won ?? 0,
-      drawn: r.draw ?? 0,
-      lost: r.lost ?? 0,
-      goalsFor: r.goals ?? 0,
-      goalsAgainst: r.opponentGoals ?? 0,
-      goalDiff: (r.goals ?? 0) - (r.opponentGoals ?? 0),
-      points: r.points ?? 0,
-      form: "-",
-    }));
+    const teams: Standing[] = rows.map((r: any, idx: number) => {
+      const rawName = r.teamName || "Unknown";
+      const teamData = getTeamInfo(rawName);
+
+      return {
+        rank: idx + 1,
+        teamId: String(r.teamId || ""),
+        teamName: teamData.name,
+        badge: teamData.flag,
+        group,
+        played: r.matches ?? 0,
+        won: r.won ?? 0,
+        drawn: r.draw ?? 0,
+        lost: r.lost ?? 0,
+        goalsFor: r.goals ?? 0,
+        goalsAgainst: r.opponentGoals ?? 0,
+        goalDiff: (r.goals ?? 0) - (r.opponentGoals ?? 0),
+        points: r.points ?? 0,
+        form: "-",
+      };
+    });
     return { group, teams };
   });
 }
