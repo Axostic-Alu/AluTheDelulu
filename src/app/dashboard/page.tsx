@@ -2,13 +2,12 @@
 
 import {
   motion, useScroll, useTransform, useSpring,
-  useMotionValue, AnimatePresence
+  useMotionValue, AnimatePresence, animate, useInView
 } from "framer-motion";
-import { useInView } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Users, Clock, TrendingUp, Terminal, Trophy,
-  Sun, Moon, Volume2, VolumeX, Share2, Download, X, Globe
+  Sun, Moon, Share2, Download, X, Globe
 } from "lucide-react";
 
 /* ══════════════════════════════════════════════════════
@@ -31,10 +30,13 @@ function useTheme() {
 }
 
 /* ══════════════════════════════════════════════════════
-   FIREBASE
+   FIREBASE & ANALYTICS HOOK
 ══════════════════════════════════════════════════════ */
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, increment, onSnapshot } from "firebase/firestore";
+import { 
+  getFirestore, doc, getDoc, setDoc, increment, 
+  onSnapshot, collection, deleteDoc 
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyATYJy0G2MCRrQVr7pg7EhN7VtUhPThYkI",
@@ -54,147 +56,117 @@ function getTodayDocId() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-async function incrementVisitorCount() {
-  if (typeof window === "undefined") return;
-  if (sessionStorage.getItem(SESSION_KEY) === "true") return;
-  sessionStorage.setItem(SESSION_KEY, "true");
-  const todayId = getTodayDocId();
-  const todayRef = doc(db, "visitors", todayId);
-  const totalRef = doc(db, "visitors", "__total__");
-  const snap = await getDoc(todayRef);
-  if (snap.exists()) await setDoc(todayRef, { count: increment(1) }, { merge: true });
-  else await setDoc(todayRef, { count: 1, date: todayId });
-  await setDoc(totalRef, { count: increment(1) }, { merge: true });
-}
-
-function useLiveVisitors() {
+function useAnalytics() {
   const [today, setToday] = useState(0);
   const [total, setTotal] = useState(0);
+  const [active, setActive] = useState(1);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
-    incrementVisitorCount().catch(console.error);
-    const todayRef = doc(db, "visitors", getTodayDocId());
-    const totalRef = doc(db, "visitors", "__total__");
-    const u1 = onSnapshot(todayRef, s => { 
-      setToday(s.exists() ? s.data().count ?? 0 : 0); 
-      setLoading(false); 
-    });
-    const u2 = onSnapshot(totalRef, s => setTotal(s.exists() ? s.data().count ?? 0 : 0));
-    return () => { u1(); u2(); };
-  }, []);
-  
-  return { today, total, loading };
-}
+    let loadedToday = false;
+    let loadedTotal = false;
 
-/* ══════════════════════════════════════════════════════
-   AMBIENT SOUND
-══════════════════════════════════════════════════════ */
-type SoundType = "off" | "rain" | "whitenoise" | "lofi";
+    const checkDone = () => {
+      if (loadedToday && loadedTotal) setLoading(false);
+    };
 
-function useAmbientSound() {
-  const [sound, setSound] = useState<SoundType>("off");
-  const ctxRef = useRef<AudioContext | null>(null);
-  const nodesRef = useRef<AudioNode[]>([]);
-  const [isAudioAllowed, setIsAudioAllowed] = useState(false);
-  
-  const stopAll = useCallback(() => {
-    nodesRef.current.forEach(n => { 
-      try { 
-        if ('stop' in n && typeof (n as any).stop === 'function') {
-          (n as any).stop();
+    // Fallback timer: force loading to false after 3s if Firebase is blocked
+    const fallbackTimer = setTimeout(() => setLoading(false), 3000);
+
+    // 1. INCREMENT VISITS (Total & Today)
+    const trackVisit = async () => {
+      try {
+        const todayId = getTodayDocId();
+        const todayRef = doc(db, "visitors", todayId);
+        const totalRef = doc(db, "visitors", "__total__");
+
+        if (sessionStorage.getItem(SESSION_KEY) !== "true") {
+          sessionStorage.setItem(SESSION_KEY, "true");
+          console.log("🚀 New session detected! Incrementing database...");
+          
+          const snap = await getDoc(todayRef);
+          if (snap.exists()) {
+            await setDoc(todayRef, { count: increment(1) }, { merge: true });
+          } else {
+            await setDoc(todayRef, { count: 1, date: todayId });
+          }
+          await setDoc(totalRef, { count: increment(1) }, { merge: true });
+        } else {
+          console.log("ℹ️ View already counted for this session. (Close tab to reset)");
         }
-      } catch(e) {}
-    });
-    nodesRef.current = []; 
-    if (ctxRef.current) {
-      ctxRef.current.close().catch(console.error);
-      ctxRef.current = null;
-    }
+      } catch (e: any) {
+        console.error("❌ Failed to increment views:", e.message);
+      }
+    };
+    trackVisit();
+
+    // 2. LISTEN TO LIVE TOTALS
+    const u1 = onSnapshot(
+      doc(db, "visitors", getTodayDocId()), 
+      (s) => { 
+        setToday(s.exists() ? s.data().count ?? 0 : 0); 
+        loadedToday = true; checkDone(); 
+      },
+      (error) => {
+        console.error("❌ Firebase Error (Today):", error.message);
+        loadedToday = true; checkDone();
+      }
+    );
+    
+    const u2 = onSnapshot(
+      doc(db, "visitors", "__total__"), 
+      (s) => { 
+        setTotal(s.exists() ? s.data().count ?? 0 : 0); 
+        loadedTotal = true; checkDone(); 
+      },
+      (error) => {
+        console.error("❌ Firebase Error (Total):", error.message);
+        loadedTotal = true; checkDone();
+      }
+    );
+
+    // 3. PRESENCE SYSTEM (Live Active Users)
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    const presenceRef = doc(db, "active_visitors", sessionId);
+    
+    // Initial heartbeat
+    setDoc(presenceRef, { timestamp: Date.now() }).catch(e => 
+      console.error("❌ Active presence error:", e.message)
+    );
+    
+    // Ping database every 15 seconds
+    const hb = setInterval(() => {
+      setDoc(presenceRef, { timestamp: Date.now() }, { merge: true }).catch(() => {});
+    }, 15000);
+
+    // Listen to all active users
+    const u3 = onSnapshot(
+      collection(db, "active_visitors"), 
+      (snap) => {
+        const now = Date.now();
+        let count = 0;
+        snap.forEach((d) => {
+          if (now - d.data().timestamp < 30000) count++;
+        });
+        setActive(Math.max(1, count));
+      },
+      (error) => console.error("❌ Firebase Error (Active):", error.message)
+    );
+
+    // Clean up when user closes tab
+    const cleanup = () => { deleteDoc(presenceRef).catch(() => {}); };
+    window.addEventListener("beforeunload", cleanup);
+
+    return () => {
+      clearTimeout(fallbackTimer);
+      u1(); u2(); u3();
+      clearInterval(hb);
+      cleanup();
+      window.removeEventListener("beforeunload", cleanup);
+    };
   }, []);
 
-  const startRain = useCallback((ctx: AudioContext) => {
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const d = buf.getChannelData(0); 
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource(); 
-    src.buffer = buf; 
-    src.loop = true;
-    const lp = ctx.createBiquadFilter(); 
-    lp.type = "lowpass"; 
-    lp.frequency.value = 1200;
-    const gain = ctx.createGain(); 
-    gain.gain.value = 0.15;
-    src.connect(lp); 
-    lp.connect(gain); 
-    gain.connect(ctx.destination); 
-    src.start();
-    nodesRef.current = [src, lp, gain];
-  }, []);
-
-  const startWhiteNoise = useCallback((ctx: AudioContext) => {
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const d = buf.getChannelData(0); 
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource(); 
-    src.buffer = buf; 
-    src.loop = true;
-    const gain = ctx.createGain(); 
-    gain.gain.value = 0.08;
-    src.connect(gain); 
-    gain.connect(ctx.destination); 
-    src.start();
-    nodesRef.current = [src, gain];
-  }, []);
-
-  const startLofi = useCallback((ctx: AudioContext) => {
-    const nodes: AudioNode[] = [];
-    [261.63, 311.13, 369.99, 440, 523.25].forEach((freq, i) => {
-      const osc = ctx.createOscillator(); 
-      osc.type = "sine"; 
-      osc.frequency.value = freq;
-      const gain = ctx.createGain(); 
-      gain.gain.value = 0.02;
-      const lfo = ctx.createOscillator(); 
-      lfo.frequency.value = 0.3 + i * 0.07;
-      const lfoG = ctx.createGain(); 
-      lfoG.gain.value = 0.01;
-      lfo.connect(lfoG); 
-      lfoG.connect(gain.gain); 
-      osc.connect(gain); 
-      gain.connect(ctx.destination);
-      lfo.start(); 
-      osc.start(); 
-      nodes.push(osc, lfo, gain, lfoG);
-    });
-    nodesRef.current = nodes;
-  }, []);
-
-  const initializeAudio = useCallback(() => {
-    if (!isAudioAllowed && sound !== "off") {
-      setIsAudioAllowed(true);
-    }
-  }, [sound, isAudioAllowed]);
-
-  useEffect(() => {
-    if (!isAudioAllowed || sound === "off") {
-      stopAll();
-      return;
-    }
-    
-    stopAll();
-    
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    ctxRef.current = ctx;
-    
-    if (sound === "rain") startRain(ctx);
-    else if (sound === "whitenoise") startWhiteNoise(ctx);
-    else if (sound === "lofi") startLofi(ctx);
-    
-    return stopAll;
-  }, [sound, isAudioAllowed, stopAll, startRain, startWhiteNoise, startLofi]);
-
-  return { sound, setSound, initializeAudio };
+  return { today, total, active, loading };
 }
 
 /* ══════════════════════════════════════════════════════
@@ -211,22 +183,17 @@ function CursorTrail({ theme }: { theme: Theme }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    const resize = () => { 
-      canvas.width = window.innerWidth; 
-      canvas.height = window.innerHeight; 
-    };
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
     window.addEventListener("resize", resize);
 
     const onMove = (e: MouseEvent) => {
       velRef.current.x = e.clientX - velRef.current.prevX;
       velRef.current.y = e.clientY - velRef.current.prevY;
-      velRef.current.prevX = e.clientX; 
-      velRef.current.prevY = e.clientY;
+      velRef.current.prevX = e.clientX; velRef.current.prevY = e.clientY;
       mouse.current = { x: e.clientX, y: e.clientY, active: true };
       hueRef.current = (hueRef.current + 1.8) % 360;
       points.current.push({ x: e.clientX, y: e.clientY, age: 0, hue: hueRef.current });
@@ -274,8 +241,7 @@ function CursorTrail({ theme }: { theme: Theme }) {
         ctx.lineCap = "round";
         ctx.shadowColor = `hsla(${hue},100%,${light}%,${alpha})`;
         ctx.shadowBlur = isDark ? 22 : 14;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.stroke(); ctx.shadowBlur = 0;
       }
 
       if (mouse.current.active && points.current.length > 2) {
@@ -301,12 +267,10 @@ function CursorTrail({ theme }: { theme: Theme }) {
         ctx.beginPath(); ctx.arc(tip.x - tipR * 0.15, tip.y - tipR * 0.15, tipR * 0.1, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255,255,255,0.95)"; ctx.fill();
       }
-
       raf.current = requestAnimationFrame(draw);
     };
     
     raf.current = requestAnimationFrame(draw);
-
     return () => {
       cancelAnimationFrame(raf.current);
       window.removeEventListener("mousemove", onMove);
@@ -323,36 +287,26 @@ function CursorTrail({ theme }: { theme: Theme }) {
 }
 
 /* ══════════════════════════════════════════════════════
-   ANIMATED NUMBER
+   ANIMATED NUMBER 
 ══════════════════════════════════════════════════════ */
 function AnimatedNumber({ value }: { value: number }) {
-  const [display, setDisplay] = useState(value);
-  const prev = useRef(value);
-  
+  const nodeRef = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
-    if (value === prev.current) return;
-    const start = prev.current; 
-    const dur = 1000; 
-    const t0 = performance.now();
-    let rafId: number;
-    
-    const step = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1);
-      const ease = 1 - Math.pow(1 - p, 4);
-      setDisplay(Math.round(start + (value - start) * ease));
-      if (p < 1) {
-        rafId = requestAnimationFrame(step);
-      }
-    };
-    prev.current = value; 
-    rafId = requestAnimationFrame(step);
-    
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    const node = nodeRef.current;
+    if (!node) return;
+    const currentText = node.textContent?.replace(/,/g, "") || "0";
+    const startValue = parseInt(currentText, 10);
+
+    const controls = animate(startValue, value, {
+      duration: 1,
+      ease: "easeOut",
+      onUpdate(val) { node.textContent = Math.round(val).toLocaleString(); }
+    });
+    return () => controls.stop();
   }, [value]);
-  
-  return <span className="tabular-nums">{display.toLocaleString()}</span>;
+
+  return <span ref={nodeRef} className="tabular-nums">{value.toLocaleString()}</span>;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -437,26 +391,17 @@ function ParticleField({ theme }: { theme: Theme }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    const resize = () => { 
-      canvas.width = window.innerWidth; 
-      canvas.height = window.innerHeight; 
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize(); window.addEventListener("resize", resize);
 
     const hues = theme === "dark" ? [190, 210, 230, 250, 270] : [270, 320, 30, 180, 45];
     particles.current = Array.from({ length: 50 }, (_, i) => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 2.2 + 0.4,
-      speed: Math.random() * 0.35 + 0.08,
-      opacity: Math.random() * 0.35 + 0.05,
-      hue: hues[i % 5],
-      wobble: Math.random() * Math.PI * 2,
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      size: Math.random() * 2.2 + 0.4, speed: Math.random() * 0.35 + 0.08,
+      opacity: Math.random() * 0.35 + 0.05, hue: hues[i % 5], wobble: Math.random() * Math.PI * 2,
     }));
 
     const draw = () => {
@@ -468,22 +413,16 @@ function ParticleField({ theme }: { theme: Theme }) {
         p.x += Math.sin(t * 0.8 + p.wobble) * 0.35;
         if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
         const l = theme === "dark" ? 65 : 55;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `hsla(${p.hue}, 80%, ${l}%, ${p.opacity})`;
-        ctx.shadowColor = `hsla(${p.hue}, 90%, ${l}%, 0.6)`;
-        ctx.shadowBlur = 6;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.shadowColor = `hsla(${p.hue}, 90%, ${l}%, 0.6)`; ctx.shadowBlur = 6;
+        ctx.fill(); ctx.shadowBlur = 0;
       });
       raf.current = requestAnimationFrame(draw);
     };
     raf.current = requestAnimationFrame(draw);
     
-    return () => { 
-      cancelAnimationFrame(raf.current); 
-      window.removeEventListener("resize", resize); 
-    };
+    return () => { cancelAnimationFrame(raf.current); window.removeEventListener("resize", resize); };
   }, [theme]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{ opacity: 0.8 }} />;
@@ -510,13 +449,8 @@ function InteractiveBackground({ theme }: { theme: Theme }) {
   }, [mx, my]);
 
   useEffect(() => {
-    let t = 0; 
-    let rafId: number;
-    const tick = () => { 
-      t += 0.008; 
-      breathe.set(1 + Math.sin(t) * 0.12); 
-      rafId = requestAnimationFrame(tick); 
-    };
+    let t = 0; let rafId: number;
+    const tick = () => { t += 0.008; breathe.set(1 + Math.sin(t) * 0.12); rafId = requestAnimationFrame(tick); };
     rafId = requestAnimationFrame(tick); 
     return () => cancelAnimationFrame(rafId);
   }, [breathe]);
@@ -554,14 +488,10 @@ function InteractiveBackground({ theme }: { theme: Theme }) {
       {orbs.map((o, i) => (
         <motion.div key={i}
           style={{
-            x: o.x, y: o.y, scale: breathe,
-            position: "absolute",
+            x: o.x, y: o.y, scale: breathe, position: "absolute",
             left: o.pos.split(" ")[0], top: o.pos.split(" ")[1],
-            width: o.size, height: o.size,
-            background: `rgba(${o.col},${o.a})`,
-            filter: "blur(140px)",
-            borderRadius: "50%",
-            transform: "translate(-50%,-50%)",
+            width: o.size, height: o.size, background: `rgba(${o.col},${o.a})`,
+            filter: "blur(140px)", borderRadius: "50%", transform: "translate(-50%,-50%)",
           }}
         />
       ))}
@@ -595,91 +525,10 @@ function ThemeToggle({ theme, toggle }: { theme: Theme; toggle: () => void }) {
 }
 
 /* ══════════════════════════════════════════════════════
-   SOUND TOGGLE
+   VISITOR COUNTER (NOW WITH LIVE ACTIVE USERS)
 ══════════════════════════════════════════════════════ */
-function SoundToggle({ sound, setSound, theme, initializeAudio }: { 
-  sound: SoundType; 
-  setSound: (s: SoundType) => void; 
-  theme: Theme;
-  initializeAudio: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const opts = [
-    { key: "off" as SoundType, label: "Off", icon: "🔇" },
-    { key: "rain" as SoundType, label: "Rain", icon: "🌧️" },
-    { key: "whitenoise" as SoundType, label: "White noise", icon: "🌊" },
-    { key: "lofi" as SoundType, label: "Lo-fi tones", icon: "🎵" },
-  ];
-  const chip = {
-    background: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.8)",
-    border: theme === "dark" ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.1)",
-    color: theme === "dark" ? "#e4e4e7" : "#18181b",
-  };
-  
-  const handleSoundChange = (key: SoundType) => {
-    setSound(key);
-    setOpen(false);
-    if (key !== "off") {
-      initializeAudio();
-    }
-  };
-  
-  return (
-    <div className="relative">
-      <motion.button onClick={() => setOpen(o => !o)} whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all"
-        style={{ ...chip, borderColor: sound !== "off" ? "#22d3ee" : undefined, color: sound !== "off" ? "#22d3ee" : chip.color }}>
-        <AnimatePresence mode="wait">
-          <motion.div key={sound} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.6, opacity: 0 }} transition={{ duration: 0.2 }}>
-            {sound === "off" ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </motion.div>
-        </AnimatePresence>
-        {sound === "off" ? "Sound" : opts.find(o => o.key === sound)?.label}
-      </motion.button>
-      <AnimatePresence>
-        {open && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10, scale: 0.95 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }} 
-            transition={{ duration: 0.2, type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute top-12 right-0 rounded-2xl overflow-hidden z-50 min-w-[168px] shadow-2xl"
-            style={{ ...chip, border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.1)"}` }}>
-            {opts.map((o, i) => (
-              <motion.button 
-                key={o.key}
-                initial={{ opacity: 0, x: -10 }} 
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => handleSoundChange(o.key)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/10"
-                style={{ color: sound === o.key ? "#22d3ee" : chip.color }}>
-                <span>{o.icon}</span>
-                <span>{o.label}</span>
-                <AnimatePresence>
-                  {sound === o.key && (
-                    <motion.span 
-                      initial={{ scale: 0 }} 
-                      animate={{ scale: 1 }} 
-                      exit={{ scale: 0 }}
-                      className="ml-auto text-cyan-400 font-bold">✓</motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   VISITOR COUNTER
-══════════════════════════════════════════════════════ */
-function VisitorCounter({ visitors, total, time, uptime, theme, loading }: {
-  visitors: number; total: number; time: Date; uptime: string; theme: Theme; loading: boolean;
+function VisitorCounter({ visitors, total, activeUsers, time, uptime, theme, loading }: {
+  visitors: number; total: number; activeUsers: number; time: Date; uptime: string; theme: Theme; loading: boolean;
 }) {
   const [pulse, setPulse] = useState(false);
   useEffect(() => { const id = setInterval(() => setPulse(p => !p), 1200); return () => clearInterval(id); }, []);
@@ -691,9 +540,7 @@ function VisitorCounter({ visitors, total, time, uptime, theme, loading }: {
   const numGrad = theme === "dark" ? "linear-gradient(90deg,#fff,#67e8f9,#f9a8d4)" : "linear-gradient(90deg,#7c3aed,#db2777,#f59e0b)";
   const totalGrad = theme === "dark" ? "linear-gradient(90deg,#fcd34d,#fb923c)" : "linear-gradient(90deg,#0ea5e9,#6366f1)";
 
-  const containerVariants = {
-    hidden: {}, visible: { transition: { staggerChildren: 0.1 } }
-  };
+  const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 80, damping: 16 } }
@@ -735,7 +582,10 @@ function VisitorCounter({ visitors, total, time, uptime, theme, loading }: {
             className="flex flex-wrap items-center gap-3 text-sm border-t pt-6 md:border-t-0 md:border-l md:pl-8 md:pt-0"
             style={{ borderColor: divider }}>
             {[
-              { icon: <><motion.span animate={{ scale: pulse ? 1.4 : 1 }} className="w-2 h-2 rounded-full bg-green-400 inline-block" /><TrendingUp className="w-3.5 h-3.5 text-green-400" /></>, label: <span className="text-green-400 font-medium">Live</span> },
+              { 
+                icon: <><motion.span animate={{ scale: pulse ? 1.4 : 1 }} className="w-2 h-2 rounded-full bg-green-400 inline-block" /><TrendingUp className="w-3.5 h-3.5 text-green-400" /></>, 
+                label: <span className="text-green-400 font-medium">{activeUsers} Active Now</span> 
+              },
               { icon: <Clock className="w-3.5 h-3.5" style={{ color: muted }} />, label: <span style={{ color: muted }}>Updated <span className="font-mono" style={{ color: textCol }}>{time.toLocaleTimeString()}</span></span> },
               { icon: <Terminal className="w-3.5 h-3.5 text-blue-400" />, label: <span style={{ color: muted }}>Session <span className="font-mono" style={{ color: textCol }}>{uptime}</span></span> },
             ].map((c, i) => (
@@ -1015,8 +865,7 @@ function AchievementToast() {
 ══════════════════════════════════════════════════════ */
 export default function DashboardPage() {
   const { theme, toggle } = useTheme();
-  const { sound, setSound, initializeAudio } = useAmbientSound();
-  const { today: visitorsToday, total: totalVisitors, loading } = useLiveVisitors();
+  const { today, total, active, loading } = useAnalytics();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [sessionStart] = useState(Date.now());
   const [mounted, setMounted] = useState(false);
@@ -1083,7 +932,6 @@ export default function DashboardPage() {
 
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }} className="flex flex-wrap items-center gap-3">
-              <SoundToggle sound={sound} setSound={setSound} theme={theme} initializeAudio={initializeAudio} />
               <ThemeToggle theme={theme} toggle={toggle} />
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style={{ ...chipStyle, color: textMuted }}>
                 <motion.span animate={{ scale: [1, 1.4, 1], opacity: [1, 0.4, 1] }}
@@ -1099,7 +947,7 @@ export default function DashboardPage() {
           </motion.header>
 
           <GlowCard theme={theme} delay={0.1}>
-            <VisitorCounter visitors={visitorsToday} total={totalVisitors}
+            <VisitorCounter visitors={today} total={total} activeUsers={active}
               time={currentTime} uptime={uptimeStr} theme={theme} loading={loading} />
           </GlowCard>
 
@@ -1108,7 +956,7 @@ export default function DashboardPage() {
           </GlowCard>
 
           <GlowCard theme={theme} delay={0.3}>
-            <ShareCard visitorsToday={visitorsToday} totalVisitors={totalVisitors} theme={theme} />
+            <ShareCard visitorsToday={today} totalVisitors={total} theme={theme} />
           </GlowCard>
 
           <Reveal delay={0.1}>
